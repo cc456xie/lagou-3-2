@@ -1,0 +1,8 @@
+## 请简述VUE首次渲染的过程
+   答： 在首次渲染之前， 首先进行Vue的初始化， 包括初始化Vue的实例成员和静态成员。  初始化完成后调用Vue的构造函数，在构造函数中调用 _init 并在这个方法中调用 vm.$mount() 。一共会调用两个$mount 第一个是入口文件 entry-runtime-with-compiler.js 的 $mount 方法， 这个$mount 的作用是将模板编译成 render 函数，在这之前会先判断是否传入了 render， 如果没有会判断是否又 template ，如果也没有就会将 el 编译成 render 函数。 它是通过 compileToFunctions 这个函数将模板编译成 render 函数的。 编译成的 render函数会存到 options.render 上。 接下来会调用 runtime.js 中的 $mount ，在其中会调用 mountComponent , mountComponent 是定义在lifecycle.js中的， mountComponent 首先也会判断是否传入了render选项， 如果没有并且传入了 template 在开发环境会发出警告。 mountComponent 会触发 beforeMount 钩子， 定义了 updateComponent， 创建Watcher对象实例， 接着触发 mounted 钩子函数，挂载完成。
+## 请简述 Vue 响应式原理
+   答：通过Vue实例的init -> initData -> observe(value)方法来为数据进行响应式处理，value 必须为对象且没有_ob_属性（有的话说明已经响应式处理过了），否则直接返回，接下来创建observer对象并返回。Observer 类会给value对象定义_ob_属性。 并对数组和对象的响应化处理，数组的响应化处理是重写数组的几个方法（push，pop，shift，unshift），如果value是对象的话，则调用walk方法对对象的所有属性执行defindReactive。defindReactive 通过 defineProperty 方法进行数据劫持，通过对象的 getter/setter 方法监听数据变动，通过 Watcher 观察者类来收集依赖于该属性的观察者，并且在数据变动时触发watcher的notify方法通知所有的依赖者，依赖者再更新到视图中。 其中收集依赖是通过模板编译的手段，对每个绑定有 v-model 的对象都将其加入该属性watcher对象的dep数组中，在触发setter时通知dep数组中的所有成员更新视图。
+## 请简述虚拟 DOM 中 Key 的作用和好处
+   key 是虚拟DOM中标记列表元素的唯一标识， 能够让Vue 能够更加精准高效的追踪到对应组件，更新虚拟DOM。设置key 之后在更新列表时DOM操作会比不设置少很多。
+## 请简述 Vue 中模板编译的过程
+   compileToFunction 时模板编译的入口函数，这个函数会先从缓存中加载编译好的 render 函数， 如果没有的话调用compile 开始编译。 compile 函数主要负责合并模板何选项并传给baseCompile ，baseCompile 首先把模板字符串转换成AST语法树，然后对AST语法树进行优化，标记AST树中的静态根节点（不需要每次重绘，patch时会跳过静态根节点）。最后将AST对象转换成js代码。 compile 执行完毕后会回到 compileToFunction 中将上一步生成的js字符串代码通过createFunction方法转化为函数。 当render 何 staticRenderFns 初始化完毕，都会被挂载到vue实例的options选项对应的属性上。
